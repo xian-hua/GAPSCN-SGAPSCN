@@ -6,8 +6,8 @@ from tensorflow.keras.layers import Conv1D, Dense,ReLU, LeakyReLU, Layer, Concat
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import MeanSquaredError as MSE
 import scipy.io
-# import matplotlib.pyplot as plt
-# from tensorflow_compression.python.layers.gdn import GDN
+import matplotlib.pyplot as plt
+from tensorflow_compression.python.layers.gdn import GDN
 from LearningRateSchedule import LinearWarmup
 from AWGN import awgn_ds
 
@@ -39,7 +39,7 @@ class attentionE(Layer):
         self.RB4 = RB(neuron)
         self.RB5 = RB(neuron)
         self.RB6 = RB(neuron)
-#         self.GDN = GDN()
+        self.GDN = GDN()
         self.permute = Permute((2,1))
         self.permute1 = Permute((2,1))
     
@@ -62,7 +62,7 @@ class attentionE(Layer):
         output4 = tf.math.multiply(output1, output4)
         
         output = (output2+output3+output4)
-#         output = self.GDN(output)
+        output = self.GDN(output)
         
         output = inputs + output
         return output
@@ -80,7 +80,7 @@ class attentionD(Layer):
         self.RB5 = RB(neuron)
         self.RB6 = RB(neuron)
         self.relu = ReLU()
-#         self.IGDN = GDN(inverse=True)
+        self.IGDN = GDN(inverse=True)
         self.permute = Permute((2,1))
         self.permute1 = Permute((2,1))
     
@@ -104,7 +104,7 @@ class attentionD(Layer):
         output4 = tf.math.multiply(output1, output4)
         
         output = (output2+output3+output4)
-#         output = self.IGDN(output)
+        output = self.IGDN(output)
         
         output = inputs + output
         return output
@@ -118,9 +118,8 @@ class resblockE(Layer):
         self.ds1 = MaxPool1D(pool_size=2, strides=None, padding='valid')
         self.ds2 = MaxPool1D(pool_size=2, strides=None, padding='valid')
         self.relu = ReLU()
-#         self.GDN1 = GDN()
-#         self.GDN2 = GDN()
-#         self.GDN3 = GDN()
+        self.GDN = GDN()
+
     
     def call(self, inputs, **kwargs):
         resoutput = self.conv1(inputs)        
@@ -132,7 +131,7 @@ class resblockE(Layer):
         
         
         output = resoutput + output
-#         output = self.GDN1(output)
+        output = self.GDN(output)
         return output
 
 class resblockD(Layer):
@@ -144,9 +143,8 @@ class resblockD(Layer):
         self.us1 = UpSampling1D(size=2)
         self.us2 = UpSampling1D(size=2)
         self.relu = ReLU()
-#         self.IGDN1 = GDN(inverse=True)
-#         self.IGDN2 = GDN(inverse=True)
-#         self.IGDN3 = GDN(inverse=True)
+        self.IGDN = GDN(inverse=True)
+
     
     def call(self, inputs, **kwargs):
         resoutput = self.conv1(inputs)  
@@ -157,19 +155,19 @@ class resblockD(Layer):
         output = self.conv3(output) 
                 
         output = resoutput + output   
-#         output = self.IGDN1(output)
+        output = self.IGDN(output)
         return output
 
 class Encoder(Model):
     def __init__(self, neuron):
         super(Encoder, self).__init__()
         self.attention1 = attentionE(neuron,64)
-#         self.attention2 = attentionE(neuron,32)
+        self.attention2 = attentionE(neuron,32)
         self.res1 = resblockE(neuron)
         self.res2 = resblockE(neuron)
         self.res3 = resblockE(neuron)
         self.res4 = resblockE(neuron)
-#         self.GDN1 = GDN()
+        self.GDN1 = GDN()
         self.conv = Conv1D(1, 1)
         self.dense = Dense(1)
 
@@ -178,17 +176,17 @@ class Encoder(Model):
         
         output = self.res1(inputs)
         output = self.attention1(output)
-#         output = self.res2(output)
-#         output = self.attention2(output)       
+        output = self.res2(output)
+        output = self.attention2(output)       
         output = self.dense(output)
-#         output = self.GDN1(output)
+        output = self.GDN1(output)
         return output
 
 class Decoder(Model):
     def __init__(self, neuron):
         super(Decoder, self).__init__()
         self.attention1 = attentionD(neuron,128)
-#         self.attention2 = attentionD(neuron,128)
+        self.attention2 = attentionD(neuron,128)
         self.res1 = resblockD(neuron)
         self.res2 = resblockD(neuron)
         self.res3 = resblockD(neuron)
@@ -200,8 +198,8 @@ class Decoder(Model):
         
         output = self.res1(inputs)  
         output = self.attention1(output)
-#         output = self.res2(output)   
-#         output = self.attention2(output)
+        output = self.res2(output)   
+        output = self.attention2(output)
         output = self.dense(output)
         return output
 
