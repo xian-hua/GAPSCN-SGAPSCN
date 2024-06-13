@@ -7,7 +7,6 @@ from tensorflow.keras.losses import MeanSquaredError as MSE
 import scipy.io
 import matplotlib.pyplot as plt
 from tensorflow_compression.python.layers.gdn import GDN
-from LearningRateSchedule import LinearWarmup
 from AWGN import awgn_ds
 
 class RB(Layer):
@@ -217,7 +216,7 @@ class AE(Model):
         return output
 
 
-# AE = AE(64)
+AE = AE(64)
 # AE.build(input_shape = (100, 128, 1))
 # AE.call(tf.keras.layers.Input(shape = (128, 1)))
 # AE.summary()
